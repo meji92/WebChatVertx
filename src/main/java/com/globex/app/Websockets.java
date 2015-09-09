@@ -35,7 +35,7 @@ public void start() {
 	  
 	  vertx.createHttpServer().websocketHandler(new Handler<ServerWebSocket>() {
       public void handle(final ServerWebSocket ws) {
-        if (ws.path().equals("/myapp")) {
+        if (ws.path().equals("/chat")) {
           ws.dataHandler(new Handler<Buffer>() {
             public void handle(Buffer data) {
             	JsonNode message= null;
@@ -50,7 +50,7 @@ public void start() {
             		if ((!users.containsKey(message.get("user").asText()))&&(!users.containsValue(message.get("user").asText()))
             				&&((!message.get("user").asText().equals(message.get("chat").asText())))&&(!message.get("user").asText().contains("?"))){ 
             			JsonObject config = newUser(message);
-                		container.deployVerticle("com.globex.app.User", config, newVerticleUser(ws,config));
+                		container.deployVerticle("com/globex/app/User.java", config, newVerticleUser(ws,config));
                 		
             		}else{ //If the username exists it send a message and close the conexion         			
         	    		ws.writeTextFrame(newMessageDuplicatedUser());
@@ -75,7 +75,7 @@ public void start() {
     public void handle(HttpServerRequest req) {
         if (req.path().equals("/")) req.response().sendFile("com/globex/resources/index.html"); // Serve the html
       }
-    }).listen(8080);
+    }).listen(9000);
   }
   
   
