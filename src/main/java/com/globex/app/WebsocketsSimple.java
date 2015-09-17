@@ -100,11 +100,11 @@ public class WebsocketsSimple extends Verticle {
 
 
 	//Remove the verticle and unregister the handler
-	private void deleteUser (String user, Handler<Message<JsonObject>> handler){
-//	    logger.info("DELETING: "+ user +" WITH DepID: "+depID.get(user));
+	private void deleteUser (String user, Handler<Message<JsonObject>> handler,final ServerWebSocket ws) {
 		colors.remove(user);
 		users.remove(user);
 		vertx.eventBus().unregisterHandler(user, handler);
+		ws.close();
 	}
 
 
@@ -122,7 +122,7 @@ public class WebsocketsSimple extends Verticle {
 				try {//Try to send the message
 					ws.writeTextFrame(msg.toString());
 				} catch (IllegalStateException e) { //The user is offline, so I delete it.
-					deleteUser(user, this);
+					deleteUser(user, this, ws);
 				}
 			}
 		};
