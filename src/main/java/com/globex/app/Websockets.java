@@ -153,6 +153,7 @@ public void start() {
 			ws.writeTextFrame(newMessage(message));
 		}catch(IllegalStateException e){ //The user is offline, so I delete it.
 			deleteUser(message.body().getString("sender"),this);
+			ws.close();
 		}
       }
     };  
