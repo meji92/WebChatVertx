@@ -46,7 +46,7 @@ public class WebsocketsSimple extends Verticle {
 								if ((!users.containsKey(message.get("user").asText()))&&(!users.containsValue(message.get("user").asText()))
 										&&((!message.get("user").asText().equals(message.get("chat").asText())))){
 									newUser(ws, message);
-									logger.info("newUser");
+									//logger.info("newUser");
 									//container.deployVerticle("com/globex/app/User.java", config, newVerticleUser(ws,config));
 
 								}else{ //If the username exists it send a message and close the conexion
@@ -60,7 +60,7 @@ public class WebsocketsSimple extends Verticle {
 								msg.putString("message", message.get("message").asText());
 								msg.putString("color", colors.get(message.get("user").asText()));
 								vertx.eventBus().publish(users.get(message.get("user").asText()), msg);
-								logger.info("ENVIADO MENSAJE" + users.get(message.get("user").asText())+msg.toString());
+								//logger.info("ENVIADO MENSAJE" + users.get(message.get("user").asText())+msg.toString());
 							}
 						}
 					});
@@ -112,7 +112,7 @@ public class WebsocketsSimple extends Verticle {
 	private Handler<Message<JsonObject>> newUserHandler (final ServerWebSocket ws, final String user){
 		Handler<Message<JsonObject>> userHandler = new Handler<Message<JsonObject>>() {
 			public void handle(Message<JsonObject> message) {
-				logger.info("RECIBIDO MENSAJE");
+				//logger.info("RECIBIDO MENSAJE");
 				ObjectNode msg = mapper.createObjectNode();
 				msg.put("type", "NoSystem");
 				msg.put("name", message.body().getString("user"));
