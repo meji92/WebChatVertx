@@ -84,16 +84,6 @@ public class WebsocketsSimple extends Verticle {
 		return msg.toString();
 	}
 
-
-	//Remove the verticle and unregister the handler
-	private void deleteUser (String user, Handler<Message<JsonObject>> handler){
-//	    logger.info("DELETING: "+ user +" WITH DepID: "+depID.get(user));
-		colors.remove(user);
-		users.remove(user);
-		vertx.eventBus().unregisterHandler(user, handler);
-	}
-
-
 	//Create a JSON with the configuration and add the user to the users and colors maps
 	private void newUser (final ServerWebSocket ws, JsonNode message){
 		final String user = message.get("user").asText();
@@ -105,8 +95,18 @@ public class WebsocketsSimple extends Verticle {
 		colorIndex = (int) ((Math.random()*100) % colorsArray.length);
 
 
-		vertx.eventBus().registerHandler(message.get("chat").asText(), newUserHandler(ws,user));
+		vertx.eventBus().registerHandler(message.get("chat").asText(), newUserHandler(ws, user));
 	}
+
+
+	//Remove the verticle and unregister the handler
+	private void deleteUser (String user, Handler<Message<JsonObject>> handler){
+//	    logger.info("DELETING: "+ user +" WITH DepID: "+depID.get(user));
+		colors.remove(user);
+		users.remove(user);
+		vertx.eventBus().unregisterHandler(user, handler);
+	}
+
 
 	//Create the handler that sends the user messages through the websocket
 	private Handler<Message<JsonObject>> newUserHandler (final ServerWebSocket ws, final String user){

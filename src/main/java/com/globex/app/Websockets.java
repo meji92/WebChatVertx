@@ -30,7 +30,7 @@ public class Websockets extends Verticle {
 
 public void start() {
 	  
-	  logger = container.logger(); 
+	  //logger = container.logger();
 	  vertx.eventBus().registerHandler("user??", newUserQueryHandler());
 	  
 	  vertx.createHttpServer().websocketHandler(new Handler<ServerWebSocket>() {
