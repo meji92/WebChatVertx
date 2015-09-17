@@ -104,7 +104,10 @@ public class WebsocketsSimple extends Verticle {
 		colors.remove(user);
 		users.remove(user);
 		vertx.eventBus().unregisterHandler(user, handler);
-		ws.close();
+		try {//Try to send the message
+			ws.close();
+		} catch (IllegalStateException e) {}
+
 	}
 
 
