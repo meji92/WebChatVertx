@@ -123,13 +123,14 @@ public void start() {
   
   
   //Remove the verticle and unregister the handler
-  private void deleteUser (String user, Handler<Message<JsonObject>> handler){ 
+  private void deleteUser (String user, Handler<Message<JsonObject>> handler,final ServerWebSocket ws){
 //	    logger.info("DELETING: "+ user +" WITH DepID: "+depID.get(user));
 	    container.undeployVerticle(depID.get(user));
 		colors.remove(user);
 		users.remove(user);
 		depID.remove(user);
-		vertx.eventBus().unregisterHandler(user, handler); 
+		vertx.eventBus().unregisterHandler(user, handler);
+	    ws.close();
   }
   
   
@@ -152,10 +153,7 @@ public void start() {
 		try{//Try to send the message
 			ws.writeTextFrame(newMessage(message));
 		}catch(IllegalStateException e){ //The user is offline, so I delete it.
-			deleteUser(message.body().getString("sender"),this);
-			try {
-				ws.close();
-			}catch (IllegalStateException es){}
+			deleteUser(message.body().getString("sender"), this, ws);
 		}
       }
     };  
@@ -184,9 +182,8 @@ public void start() {
 			public void handle(Message<String> arg0) {
 //				logger.info("RECIVED DELETE FOR "+arg0.body()+" IN "+vertx.currentContext());
 				if (arg0.body().equals(vertx.currentContext().toString())){ //Only if I sent the query I remove the user
-					deleteUser(user,handler);
 					ws.writeTextFrame(newMessageDuplicatedUser());
-					ws.close();
+					deleteUser(user,handler,ws);
 					vertx.eventBus().unregisterHandler(user+"?", this);
 				}
 			}
