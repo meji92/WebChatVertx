@@ -15,7 +15,7 @@ import org.vertx.java.platform.Verticle;
 import java.io.IOException;
 import java.util.HashMap;
 
-public class WebsocketsSimple extends Verticle {
+public class ChatManagerSimple extends Verticle {
 
 	private ObjectMapper mapper = new ObjectMapper();
 	private HashMap<String, String> users = new HashMap<String, String>(); //Add because I need the chat to send through the bus and normal messages haven't chat tag
