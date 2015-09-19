@@ -89,7 +89,7 @@ public void start() {
 //              logger.info("ADD : "+config.getString("name")+" WITH DepID: "+depID.get(config.getString("name")));
               
             //A new handler to send the user messages through the websocket
-      		Handler<Message<JsonObject>> userHandler = newUserHandler(ws);	                                                                  
+      		Handler<Message<String>> userHandler = newUserHandler(ws, config.getString("name"));
       		vertx.eventBus().registerHandler(config.getString("name"), userHandler);
       		AskNodesForUser(config.getString("name"),ws, userHandler);
           } else {
@@ -99,38 +99,6 @@ public void start() {
       };
       
       return handler;
-  }
-  
-  
-  //Create a new message to send through the websocket from the recived through the bus
-  private String newMessage(Message<JsonObject> message){
-	    ObjectNode msg = mapper.createObjectNode();
-  		msg.put("type", "NoSystem");
-		msg.put("name", message.body().getString("name"));
-		msg.put("color", message.body().getString("color"));
-		msg.put("message", message.body().getString("message"));
-		return msg.toString();
-  }
-  
-  
-  //Create the duplicatedUser message
-  private String newMessageDuplicatedUser(){
-	  	ObjectNode msg = mapper.createObjectNode();
-		msg.put("type", "system");
-		msg.put("message", "Ya existe un usuario con ese nombre");
-		return msg.toString();
-  }
-  
-  
-  //Remove the verticle and unregister the handler
-  private void deleteUser (String user, Handler<Message<JsonObject>> handler,final ServerWebSocket ws){
-//	    logger.info("DELETING: "+ user +" WITH DepID: "+depID.get(user));
-	    container.undeployVerticle(depID.get(user));
-		colors.remove(user);
-		users.remove(user);
-		depID.remove(user);
-		vertx.eventBus().unregisterHandler(user, handler);
-	    ws.close();
   }
   
   
@@ -147,20 +115,40 @@ public void start() {
   
   
   //Create the handler that sends the user messages through the websocket
-  private Handler<Message<JsonObject>> newUserHandler (final ServerWebSocket ws){
-	  Handler<Message<JsonObject>> userHandler = new Handler<Message<JsonObject>>() {
-      public void handle(Message<JsonObject> message) {
+  private Handler<Message<String>> newUserHandler (final ServerWebSocket ws, final String user){
+	  Handler<Message<String>> userHandler = new Handler<Message<String>>() {
+      public void handle(Message<String> message) {
 		try{//Try to send the message
-			ws.writeTextFrame(newMessage(message));
+			ws.writeTextFrame(message.body());
 		}catch(IllegalStateException e){ //The user is offline, so I delete it.
-			deleteUser(message.body().getString("sender"), this, ws);
+			deleteUser(user, this, ws);
 		}
       }
     };  
     return userHandler;
   }
-  
-  
+
+  //Create the duplicatedUser message
+  private String newMessageDuplicatedUser(){
+	ObjectNode msg = mapper.createObjectNode();
+	msg.put("type", "system");
+    msg.put("message", "Ya existe un usuario con ese nombre");
+	return msg.toString();
+  }
+
+
+	//Remove the verticle and unregister the handler
+  private void deleteUser (String user, Handler<Message<String>> handler,final ServerWebSocket ws){
+//   logger.info("DELETING: "+ user +" WITH DepID: "+depID.get(user));
+	container.undeployVerticle(depID.get(user));
+	colors.remove(user);
+	users.remove(user);
+	depID.remove(user);
+	vertx.eventBus().unregisterHandler(user, handler);
+	ws.close();
+  }
+
+
   //Returns a new handler that responds if the verticle have this user in its maps
   private Handler<Message<JsonObject>> newUserQueryHandler (){
   	Handler<Message<JsonObject>> handler = new Handler<Message<JsonObject>>(){
@@ -177,7 +165,7 @@ public void start() {
   
   
   //Ask to the rest of verticles if anyone have this user. If anyone reply with the label usernme+"?", it remove the user and close the websocket
-  private void AskNodesForUser(final String user, final ServerWebSocket ws, final Handler<Message<JsonObject>> handler) {
+  private void AskNodesForUser(final String user, final ServerWebSocket ws, final Handler<Message<String>> handler) {
 		vertx.eventBus().registerHandler(user+"?", new Handler<Message<String>>(){
 			public void handle(Message<String> arg0) {
 //				logger.info("RECIVED DELETE FOR "+arg0.body()+" IN "+vertx.currentContext());
