@@ -166,29 +166,37 @@ public void start() {
   
   //Ask to the rest of verticles if anyone have this user. If anyone reply with the label usernme+"?", it remove the user and close the websocket
   private void AskNodesForUser(final String user, final ServerWebSocket ws, final Handler<Message<String>> handler) {
-		vertx.eventBus().registerHandler(user+"?", new Handler<Message<String>>(){
-			public void handle(Message<String> arg0) {
-//				logger.info("RECIVED DELETE FOR "+arg0.body()+" IN "+vertx.currentContext());
-				if (arg0.body().equals(vertx.currentContext().toString())){ //Only if I sent the query I remove the user
-					ws.writeTextFrame(newMessageDuplicatedUser());
-					deleteUser(user,handler,ws);
-					vertx.eventBus().unregisterHandler(user+"?", this);
-				}
-			}
-		},new AsyncResultHandler<Void>(){  //This handler will receive a message when the handler is suscribed to the eventBus
 
-			public void handle(AsyncResult<Void> arg0) {
+	  final Handler<Message<String>> replyHandler = new Handler<Message<String>>(){
+		  public void handle(Message<String> arg0) {
+//				logger.info("RECIVED DELETE FOR "+arg0.body()+" IN "+vertx.currentContext());
+			  if (arg0.body().equals(vertx.currentContext().toString())){ //Only if I sent the query I remove the user
+				  ws.writeTextFrame(newMessageDuplicatedUser());
+				  deleteUser(user,handler,ws);
+				  vertx.eventBus().unregisterHandler(user+"?", this);
+			  }
+		  }
+	  };
+
+	  vertx.eventBus().registerHandler(user+"?", replyHandler,new AsyncResultHandler<Void>(){  //This handler will receive a message when the handler is suscribed to the eventBus
+		  public void handle(AsyncResult<Void> arg0) {
 //				logger.info(arg0.toString());
-				JsonObject msg = new JsonObject();
-				msg.putString("user", user);
-				msg.putString("context", vertx.currentContext().toString());
+			  JsonObject msg = new JsonObject();
+			  msg.putString("user", user);
+			  msg.putString("context", vertx.currentContext().toString());
 //				logger.info("SEND QUESTION: "+user+" FROM "+vertx.currentContext().toString());
-			
-				vertx.eventBus().publish("user??", msg);
-				
-			}
-			
-		});
+
+			  vertx.eventBus().publish("user??", msg);
+		  }
+
+	  });
+
+	  vertx.setTimer(10000, new Handler<Long>() {
+				  public void handle(Long arg0) {
+					  vertx.eventBus().unregisterHandler(user+"?",replyHandler);
+				  }
+			  }
+	  );
 		
 	}
   
