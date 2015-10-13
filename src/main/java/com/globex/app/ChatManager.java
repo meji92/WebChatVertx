@@ -30,10 +30,10 @@ public class ChatManager extends Verticle {
 
 public void start() {
 	  
-	  //logger = container.logger();
-	  vertx.eventBus().registerHandler("user??", newUserQueryHandler());
+      //logger = container.logger();
+      vertx.eventBus().registerHandler("user??", newUserQueryHandler());
 	  
-	  vertx.createHttpServer().websocketHandler(new Handler<ServerWebSocket>() {
+      vertx.createHttpServer().websocketHandler(new Handler<ServerWebSocket>() {
       public void handle(final ServerWebSocket ws) {
         if (ws.path().equals("/chat")) {
           ws.dataHandler(new Handler<Buffer>() {
