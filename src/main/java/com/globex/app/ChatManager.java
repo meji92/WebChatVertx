@@ -145,7 +145,9 @@ public void start() {
 	users.remove(user);
 	depID.remove(user);
 	vertx.eventBus().unregisterHandler(user, handler);
-	ws.close();
+	  try{
+		  ws.close();
+	  }catch(IllegalStateException e){}
   }
 
 
