@@ -40,10 +40,10 @@ public void start() {
             public void handle(Buffer data) {
             	JsonNode message= null;
             	try {
-					message= mapper.readTree(data.getBytes());  //message to Json
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+			message= mapper.readTree(data.getBytes());  //message to Json
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
             	
             	if (!message.has("message")){ //Is the log in message (don't have message) 
             		//If don't exists this username or a chat with the same name...
@@ -85,7 +85,7 @@ public void start() {
   AsyncResultHandler<String> handler = new AsyncResultHandler<String>() {
       public void handle(AsyncResult<String> asyncResult) {
           if (asyncResult.succeeded()) {
-              depID.put(config.getString("name"), asyncResult.result()); //Save the deploymentID to later remove the verticle
+        	depID.put(config.getString("name"), asyncResult.result()); //Save the deploymentID to later remove the verticle
 //              logger.info("ADD : "+config.getString("name")+" WITH DepID: "+depID.get(config.getString("name")));
               
             //A new handler to send the user messages through the websocket
@@ -93,38 +93,37 @@ public void start() {
       		vertx.eventBus().registerHandler(config.getString("name"), userHandler);
       		AskNodesForUser(config.getString("name"),ws, userHandler);
           } else {
-              asyncResult.cause().printStackTrace();
+              	asyncResult.cause().printStackTrace();
           }
       }
       };
-      
       return handler;
   }
   
   
   //Create a JSON with the configuration and add the user to the users and colors maps
   private JsonObject newUser (JsonNode message){
-	  	JsonObject config = new JsonObject();								 
-  		config.putString("name", message.get("user").asText());
-		config.putString("chat", message.get("chat").asText());
-		users.put(message.get("user").asText(), message.get("chat").asText()); 
-		colors.put(message.get("user").asText(), colorsArray[colorIndex]); 
-		colorIndex = (int) ((Math.random()*100) % colorsArray.length);
-		return config;
+	JsonObject config = new JsonObject();								 
+  	config.putString("name", message.get("user").asText());
+	config.putString("chat", message.get("chat").asText());
+	users.put(message.get("user").asText(), message.get("chat").asText()); 
+	colors.put(message.get("user").asText(), colorsArray[colorIndex]); 
+	colorIndex = (int) ((Math.random()*100) % colorsArray.length);
+	return config;
   }
   
   
   //Create the handler that sends the user messages through the websocket
   private Handler<Message<String>> newUserHandler (final ServerWebSocket ws, final String user){
-	  Handler<Message<String>> userHandler = new Handler<Message<String>>() {
-      public void handle(Message<String> message) {
-		try{//Try to send the message
-			ws.writeTextFrame(message.body());
-		}catch(IllegalStateException e){ //The user is offline, so I delete it.
-			deleteUser(user, this, ws);
-		}
-      }
-    };  
+  	Handler<Message<String>> userHandler = new Handler<Message<String>>() {
+      		public void handle(Message<String> message) {
+			try{//Try to send the message
+				ws.writeTextFrame(message.body());
+			}catch(IllegalStateException e){ //The user is offline, so I delete it.
+				deleteUser(user, this, ws);
+			}
+      		}
+    	};  
     return userHandler;
   }
 
@@ -132,7 +131,7 @@ public void start() {
   private String newMessageDuplicatedUser(){
 	ObjectNode msg = mapper.createObjectNode();
 	msg.put("type", "system");
-    msg.put("message", "Ya existe un usuario con ese nombre");
+	msg.put("message", "Ya existe un usuario con ese nombre");
 	return msg.toString();
   }
 
@@ -145,9 +144,9 @@ public void start() {
 	users.remove(user);
 	depID.remove(user);
 	vertx.eventBus().unregisterHandler(user, handler);
-	  try{
-		  ws.close();
-	  }catch(IllegalStateException e){}
+	try{
+		ws.close();
+	}catch(IllegalStateException e){}
   }
 
 
@@ -161,46 +160,43 @@ public void start() {
 //				logger.info("SEND DELETE: "+arg0.body().getString("user")+" FROM "+vertx.currentContext().toString()+" A "+arg0.body().getString("context"));
 			}		
 		}
-	  };
-	  return handler;
+	};
+	return handler;
   }
   
   
   //Ask to the rest of verticles if anyone have this user. If anyone reply with the label usernme+"?", it remove the user and close the websocket
   private void AskNodesForUser(final String user, final ServerWebSocket ws, final Handler<Message<String>> handler) {
 
-	  final Handler<Message<String>> replyHandler = new Handler<Message<String>>(){
-		  public void handle(Message<String> arg0) {
+	final Handler<Message<String>> replyHandler = new Handler<Message<String>>(){
+		public void handle(Message<String> arg0) {
 //				logger.info("RECIVED DELETE FOR "+arg0.body()+" IN "+vertx.currentContext());
-			  if (arg0.body().equals(vertx.currentContext().toString())){ //Only if I sent the query I remove the user
+			if (arg0.body().equals(vertx.currentContext().toString())){ //Only if I sent the query I remove the user
 				  ws.writeTextFrame(newMessageDuplicatedUser());
 				  deleteUser(user,handler,ws);
 				  vertx.eventBus().unregisterHandler(user+"?", this);
-			  }
-		  }
-	  };
+			}
+		}
+	};
 
-	  vertx.eventBus().registerHandler(user+"?", replyHandler,new AsyncResultHandler<Void>(){  //This handler will receive a message when the handler is suscribed to the eventBus
-		  public void handle(AsyncResult<Void> arg0) {
-//				logger.info(arg0.toString());
+	vertx.eventBus().registerHandler(user+"?", replyHandler,new AsyncResultHandler<Void>(){  //This handler will receive a message when the handler is suscribed to the eventBus
+		public void handle(AsyncResult<Void> arg0) {
+//		          logger.info(arg0.toString());
 			  JsonObject msg = new JsonObject();
 			  msg.putString("user", user);
 			  msg.putString("context", vertx.currentContext().toString());
-//				logger.info("SEND QUESTION: "+user+" FROM "+vertx.currentContext().toString());
-
+//			  logger.info("SEND QUESTION: "+user+" FROM "+vertx.currentContext().toString());
 			  vertx.eventBus().publish("user??", msg);
-		  }
+		}
 
-	  });
+	});
 
-	  vertx.setTimer(10000, new Handler<Long>() {
-				  public void handle(Long arg0) {
-					  vertx.eventBus().unregisterHandler(user+"?",replyHandler);
-				  }
-			  }
-	  );
-		
-	}
+	vertx.setTimer(10000, new Handler<Long>() {
+		public void handle(Long arg0) {
+			vertx.eventBus().unregisterHandler(user+"?",replyHandler);
+		}
+	});
+  }
   
 
 }
